@@ -153,6 +153,7 @@ async function recordMatch(){
 			if (!response3.value){
 				console.log(red('Aborted'))
 				resolve(false)
+				return
 			}
 			
 			// update winner win rate
@@ -188,7 +189,7 @@ function fillNull(user){
 }
 
 async function showLeaderboard(){
-	const sql='SELECT * FROM users ORDER BY winrate DESC'
+	const sql='SELECT * FROM users ORDER BY winrate DESC, win DESC, lose DESC'
 	return new Promise((resolve,reject)=>{
 		db.all(sql,async (err,rows)=>{
 			if (err){
@@ -207,14 +208,6 @@ async function showLeaderboard(){
 				resolve(false)
 				return		
 			}
-
-			rows.sort((a,b)=>{
-				if (b.winrate!=a.winrate){
-					return b.winrate-a.winrate
-				}else{
-					return b.win-a.win
-				}
-			})
 
 			console.table(rows)
 	
@@ -244,7 +237,7 @@ async function addPlayer(){
 		return
 	}
 
-	db.run('INSERT INTO users (name) VALUES (?)',[response.value],(err)=>{
+	db.run('INSERT INTO users (name,win,lose,winrate) VALUES (?,?,?,?)',[response.value,0,0,0],(err)=>{
 		if (err) {
 			console.error(red(err.message))
 		}
