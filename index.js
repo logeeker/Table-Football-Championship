@@ -2,6 +2,8 @@ const prompts = require('prompts');
 const {
   red,
 	bgRed,
+	yellow,
+	green,
 } = require('kolorist')
 const fs=require('fs');
 
@@ -20,7 +22,7 @@ let db=new sqlite3.Database('./champ.db',(err)=>{
 
 async function main(){
 
-	db.run('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, win INTEGER, lose INTEGER, winrate REAL)');
+	db.run('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, win INTEGER NOT NULL, lose INTEGER NOT NULL, winrate REAL NOT NULL)');
 
 
 	while(true){
@@ -80,11 +82,11 @@ async function recordMatch(){
 				return
 			}
 
-			if (rows.length==0){
+			if (rows.length<=1){
 				let response = await prompts({
 					type: 'confirm',
 					name: 'value',
-					message: 'Database is empty. Create a new player first!',
+					message: red('Not enough players. Create a new player first!'),
 					initial: true
 				})
 
@@ -144,9 +146,9 @@ async function recordMatch(){
 			const response3 = await prompts({
 				type: 'toggle',
 				name: 'value',
-				message: `Are you sure you want to record ${winner.name} as winner and ${loser.name} as loser?`,
+				message: yellow(`Are you sure you want to record ${winner.name} as winner and ${loser.name} as loser?`),
 				initial: true,
-				active: 'yes',
+				active: green('yes'),
 				inactive: 'no'
 			})
 
@@ -156,10 +158,6 @@ async function recordMatch(){
 				return
 			}
 			
-			// update winner win rate
-			fillNull(winner)
-			fillNull(loser)
-
 			winner.win+=1
 			loser.lose+=1
 
@@ -177,17 +175,6 @@ async function recordMatch(){
 	})
 }
 
-function fillNull(user){
-	if (!user.win){
-		user.win=0
-	}
-	if (!user.lose){
-		user.lose=0
-	}
-
-	return user
-}
-
 async function showLeaderboard(){
 	const sql='SELECT * FROM users ORDER BY winrate DESC, win DESC, lose DESC'
 	return new Promise((resolve,reject)=>{
@@ -198,11 +185,11 @@ async function showLeaderboard(){
 				return
 			}
 
-			if (rows.length==0){
+			if (rows.length<=0){
 				let response = await prompts({
 					type: 'confirm',
 					name: 'value',
-					message: 'Database is empty. Create a new player first!',
+					message: red('Database is empty. Create a new player first!'),
 					initial: true
 				})
 				resolve(false)
